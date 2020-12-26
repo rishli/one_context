@@ -1,5 +1,6 @@
 import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:flutter/material.dart';
+import 'package:one_context/src/components/one_basic_widget.dart';
 import 'package:one_context/src/controllers/one_context.dart';
 
 class OneContextWidget extends StatefulWidget {
@@ -16,22 +17,34 @@ class _OneContextWidgetState extends State<OneContextWidget> {
         showDialog: _showDialog,
         showSnackBar: _showSnackBar,
         showModalBottomSheet: _showModalBottomSheet,
-        showBottomSheet: _showBottomSheet);
-    BackButtonInterceptor.add(myInterceptor);
+        showBottomSheet: _showBottomSheet,
+        showDatePicker: _showDatePicker);
+    BackButtonInterceptor.add(backButtonInterceptor);
   }
 
   @override
   void dispose() {
-    BackButtonInterceptor.remove(myInterceptor);
+    BackButtonInterceptor.remove(backButtonInterceptor);
     super.dispose();
   }
 
-   bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
-    if (OneContext().hasDialogVisible) {
-      OneContext().popDialog();      
-      return true;
+  bool backButtonInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
+    try {
+      if (OneContext().hasDialogVisible) {
+        OneBasicWidget lastDialog = OneContext().dialogList.last;
+        if (lastDialog.isBackButtonDismissible) {
+          if (lastDialog.type == OneBasicWidgetTypes.snackbar) {
+            OneContext().hideCurrentSnackBar();
+          } else {
+            OneContext().popDialog();
+          }
+        }
+        return true;
+      } else
+        return false;
+    } catch (e) {
+      return false;
     }
-    return false;
   }
 
   @override
@@ -99,4 +112,48 @@ class _OneContextWidgetState extends State<OneContextWidget> {
         shape: shape,
         clipBehavior: clipBehavior);
   }
+
+  Future<DateTime> _showDatePicker({
+    @required DateTime initialDate,
+    @required DateTime firstDate,
+    @required DateTime lastDate,
+    DateTime currentDate,
+    DatePickerEntryMode initialEntryMode,
+    SelectableDayPredicate selectableDayPredicate,
+    String helpText,
+    String cancelText,
+    String confirmText,
+    Locale locale,
+    bool useRootNavigator,
+    RouteSettings routeSettings,
+    TextDirection textDirection,
+    TransitionBuilder builder,
+    DatePickerMode initialDatePickerMode,
+    String errorFormatText,
+    String errorInvalidText,
+    String fieldHintText,
+    String fieldLabelText,
+  }) =>
+      showDatePicker(
+        context: OneContext().context,
+        initialDate: initialDate,
+        firstDate: firstDate,
+        lastDate: lastDate,
+        currentDate: currentDate,
+        initialEntryMode: initialEntryMode,
+        selectableDayPredicate: selectableDayPredicate,
+        helpText: helpText,
+        cancelText: cancelText,
+        confirmText: confirmText,
+        locale: locale,
+        useRootNavigator: useRootNavigator,
+        routeSettings: routeSettings,
+        textDirection: textDirection,
+        builder: builder,
+        initialDatePickerMode: initialDatePickerMode,
+        errorFormatText: errorFormatText,
+        errorInvalidText: errorInvalidText,
+        fieldHintText: fieldHintText,
+        fieldLabelText: fieldLabelText,
+      );
 }

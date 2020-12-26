@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:one_context/src/components/one_basic_widget.dart';
 import 'package:one_context/src/controllers/one_context.dart';
 import 'package:flutter/material.dart';
 
@@ -11,26 +12,21 @@ mixin DialogController {
   /// The current context
   BuildContext get context => OneContext().context;
 
-  ValueNotifier<List<Widget>> _dialogs = ValueNotifier([]);
-  ValueNotifier<List<Widget>> get dialogNotifier => _dialogs;
-  bool get hasDialogVisible => _dialogs.value.length > 0;
+  List<OneBasicWidget> _dialogs = [];
+  List<OneBasicWidget> get dialogList => _dialogs;
 
-  void addDialogVisible(Widget widget) {
-    _dialogs.value.add(widget);
+  /// Check if it has dialog visible
+  bool get hasDialogVisible => _dialogs.length > 0;
+
+  void _addDialogVisible(OneBasicWidget widget) {
+    _dialogs.add(widget);
   }
 
-  void removeDialogVisible({Widget widget}) {
-    if (widget != null){
-      _dialogs.value.remove(widget);
-    } else _dialogs.value.removeLast();
-  }
-
-  /// ## Please, do not use this method!
-  /// It's is a provisional implementation and there is no annotation for that
-  /// in Dart 2, so I used the `@deprecated` instead, in order to keep the compatibility
-  @deprecated
-  void resetDialogRegisters() {    
-    _dialogs.value.clear();
+  void _removeDialogVisible({OneBasicWidget widget}) {
+    if (widget != null) {
+      _dialogs.remove(widget);
+    } else
+      _dialogs.removeLast();
   }
 
   Future<T> Function<T>(
@@ -54,6 +50,27 @@ mixin DialogController {
       double elevation,
       ShapeBorder shape,
       Clip clipBehavior}) _showBottomSheet;
+  Future<DateTime> Function({
+    @required DateTime initialDate,
+    @required DateTime firstDate,
+    @required DateTime lastDate,
+    DateTime currentDate,
+    DatePickerEntryMode initialEntryMode,
+    SelectableDayPredicate selectableDayPredicate,
+    String helpText,
+    String cancelText,
+    String confirmText,
+    Locale locale,
+    bool useRootNavigator,
+    RouteSettings routeSettings,
+    TextDirection textDirection,
+    TransitionBuilder builder,
+    DatePickerMode initialDatePickerMode,
+    String errorFormatText,
+    String errorInvalidText,
+    String fieldHintText,
+    String fieldLabelText,
+  }) _showDatePicker;
 
   /// Displays a Material dialog above the current contents of the app, with
   /// Material entrance and exit animations, modal barrier color, and modal
@@ -61,19 +78,23 @@ mixin DialogController {
   Future<T> showDialog<T>(
       {@required Widget Function(BuildContext) builder,
       bool barrierDismissible = true,
-      bool useRootNavigator = true}) async {
+      bool useRootNavigator = true,
+      bool isBackButtonDismissible}) async {
     assert(builder != null);
     if (!(await _contextLoaded())) return null;
-
-    Widget dialog = builder(context);
-    addDialogVisible(dialog);
-    
+    if (isBackButtonDismissible == null)
+      isBackButtonDismissible = barrierDismissible;
+    Widget dialog = OneBasicWidget(
+        child: builder(context),
+        type: OneBasicWidgetTypes.dialog,
+        isBackButtonDismissible: isBackButtonDismissible);
+    _addDialogVisible(dialog);
     return _showDialog<T>(
       builder: (_) => dialog,
       barrierDismissible: barrierDismissible,
       useRootNavigator: useRootNavigator,
     ).whenComplete(() {
-      removeDialogVisible(widget: dialog);
+      _removeDialogVisible(widget: dialog);
     });
   }
 
@@ -108,10 +129,21 @@ mixin DialogController {
 
   /// Shows a [SnackBar] at the bottom of the scaffold.
   Future<ScaffoldFeatureController<SnackBar, SnackBarClosedReason>>
-      showSnackBar({@required SnackBar Function(BuildContext) builder}) async {
+      showSnackBar(
+          {@required SnackBar Function(BuildContext) builder,
+          bool isBackButtonDismissible = true}) async {
     assert(builder != null);
     if (!(await _contextLoaded())) return null;
-    return _showSnackBar(builder);
+    Widget snackbar = builder(context);
+    Widget dialog = OneBasicWidget(
+        child: snackbar,
+        type: OneBasicWidgetTypes.snackbar,
+        isBackButtonDismissible: isBackButtonDismissible);
+    _addDialogVisible(dialog);
+    return _showSnackBar((_) => snackbar)
+      ..closed.whenComplete(() {
+        _removeDialogVisible(widget: dialog);
+      });
   }
 
   /// Shows a modal material design bottom sheet.
@@ -126,18 +158,29 @@ mixin DialogController {
       Clip clipBehavior,
       bool isScrollControlled = false,
       bool useRootNavigator = false,
-      bool isDismissible = true}) async {
+      bool isDismissible = true,
+      bool isBackButtonDismissible}) async {
     assert(builder != null);
     if (!(await _contextLoaded())) return null;
+    if (isBackButtonDismissible == null)
+      isBackButtonDismissible = isDismissible;
+    Widget dialog = OneBasicWidget(
+        child: builder(context),
+        type: OneBasicWidgetTypes.modalBottomSheet,
+        isBackButtonDismissible: isBackButtonDismissible);
+    _addDialogVisible(dialog);
     return _showModalBottomSheet<T>(
-        builder: builder,
-        backgroundColor: backgroundColor,
-        clipBehavior: clipBehavior,
-        elevation: elevation,
-        isDismissible: isDismissible,
-        isScrollControlled: isScrollControlled,
-        shape: shape,
-        useRootNavigator: useRootNavigator);
+            builder: (_) => dialog,
+            backgroundColor: backgroundColor,
+            clipBehavior: clipBehavior,
+            elevation: elevation,
+            isDismissible: isDismissible,
+            isScrollControlled: isScrollControlled,
+            shape: shape,
+            useRootNavigator: useRootNavigator)
+        .whenComplete(() {
+      _removeDialogVisible(widget: dialog);
+    });
   }
 
   /// Shows a material design bottom sheet in the nearest [Scaffold] ancestor. If
@@ -150,15 +193,145 @@ mixin DialogController {
       Color backgroundColor,
       double elevation,
       ShapeBorder shape,
-      Clip clipBehavior}) async {
+      Clip clipBehavior,
+      bool isBackButtonDismissible = true}) async {
     assert(builder != null);
     if (!(await _contextLoaded())) return null;
+    Widget dialog = OneBasicWidget(
+        child: builder(context),
+        type: OneBasicWidgetTypes.bottomSheet,
+        isBackButtonDismissible: isBackButtonDismissible);
+    _addDialogVisible(dialog);
     return _showBottomSheet<T>(
         builder: builder,
         backgroundColor: backgroundColor,
         elevation: elevation,
         shape: shape,
-        clipBehavior: clipBehavior);
+        clipBehavior: clipBehavior)
+      ..closed.whenComplete(() {
+        _removeDialogVisible(widget: dialog);
+      });
+  }
+
+  /// Shows a dialog containing a Material Design date picker.
+  ///
+  /// The returned [Future] resolves to the date selected by the user when the
+  /// user confirms the dialog. If the user cancels the dialog, null is returned.
+  ///
+  /// When the date picker is first displayed, it will show the month of
+  /// [initialDate], with [initialDate] selected.
+  ///
+  /// The [firstDate] is the earliest allowable date. The [lastDate] is the latest
+  /// allowable date. [initialDate] must either fall between these dates,
+  /// or be equal to one of them. For each of these [DateTime] parameters, only
+  /// their dates are considered. Their time fields are ignored. They must all
+  /// be non-null.
+  ///
+  /// The [currentDate] represents the current day (i.e. today). This
+  /// date will be highlighted in the day grid. If null, the date of
+  /// `DateTime.now()` will be used.
+  ///
+  /// An optional [initialEntryMode] argument can be used to display the date
+  /// picker in the [DatePickerEntryMode.calendar] (a calendar month grid)
+  /// or [DatePickerEntryMode.input] (a text input field) mode.
+  /// It defaults to [DatePickerEntryMode.calendar] and must be non-null.
+  ///
+  /// An optional [selectableDayPredicate] function can be passed in to only allow
+  /// certain days for selection. If provided, only the days that
+  /// [selectableDayPredicate] returns true for will be selectable. For example,
+  /// this can be used to only allow weekdays for selection. If provided, it must
+  /// return true for [initialDate].
+  ///
+  /// The following optional string parameters allow you to override the default
+  /// text used for various parts of the dialog:
+  ///
+  ///   * [helpText], label displayed at the top of the dialog.
+  ///   * [cancelText], label on the cancel button.
+  ///   * [confirmText], label on the ok button.
+  ///   * [errorFormatText], message used when the input text isn't in a proper date format.
+  ///   * [errorInvalidText], message used when the input text isn't a selectable date.
+  ///   * [fieldHintText], text used to prompt the user when no text has been entered in the field.
+  ///   * [fieldLabelText], label for the date text input field.
+  ///
+  /// An optional [locale] argument can be used to set the locale for the date
+  /// picker. It defaults to the ambient locale provided by [Localizations].
+  ///
+  /// An optional [textDirection] argument can be used to set the text direction
+  /// ([TextDirection.ltr] or [TextDirection.rtl]) for the date picker. It
+  /// defaults to the ambient text direction provided by [Directionality]. If both
+  /// [locale] and [textDirection] are non-null, [textDirection] overrides the
+  /// direction chosen for the [locale].
+  ///
+  /// The [context], [useRootNavigator] and [routeSettings] arguments are passed to
+  /// [showDialog], the documentation for which discusses how it is used. [context]
+  /// and [useRootNavigator] must be non-null.
+  ///
+  /// The [builder] parameter can be used to wrap the dialog widget
+  /// to add inherited widgets like [Theme].
+  ///
+  /// An optional [initialDatePickerMode] argument can be used to have the
+  /// calendar date picker initially appear in the [DatePickerMode.year] or
+  /// [DatePickerMode.day] mode. It defaults to [DatePickerMode.day], and
+  /// must be non-null.
+  ///
+  /// See also:
+  ///
+  ///  * [showDateRangePicker], which shows a material design date range picker
+  ///    used to select a range of dates.
+  ///  * [CalendarDatePicker], which provides the calendar grid used by the date picker dialog.
+  ///  * [InputDatePickerFormField], which provides a text input field for entering dates.
+  ///
+  Future<DateTime> showDatePicker({
+    @required DateTime initialDate,
+    @required DateTime firstDate,
+    @required DateTime lastDate,
+    bool isBackButtonDismissible = true,
+    DateTime currentDate,
+    DatePickerEntryMode initialEntryMode = DatePickerEntryMode.calendar,
+    SelectableDayPredicate selectableDayPredicate,
+    String helpText,
+    String cancelText,
+    String confirmText,
+    Locale locale,
+    bool useRootNavigator = true,
+    RouteSettings routeSettings,
+    TextDirection textDirection,
+    TransitionBuilder builder,
+    DatePickerMode initialDatePickerMode = DatePickerMode.day,
+    String errorFormatText,
+    String errorInvalidText,
+    String fieldHintText,
+    String fieldLabelText,
+  }) async {
+    if (!(await _contextLoaded())) return null;
+    OneBasicWidget dialog = OneBasicWidget(
+        child: SizedBox.shrink(),
+        type: OneBasicWidgetTypes.datePicker,
+        isBackButtonDismissible: isBackButtonDismissible);
+    _addDialogVisible(dialog);
+    return _showDatePicker(
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
+      currentDate: currentDate,
+      initialEntryMode: initialEntryMode,
+      selectableDayPredicate: selectableDayPredicate,
+      helpText: helpText,
+      cancelText: cancelText,
+      confirmText: confirmText,
+      locale: locale,
+      useRootNavigator: useRootNavigator,
+      routeSettings: routeSettings,
+      textDirection: textDirection,
+      builder: builder,
+      initialDatePickerMode: initialDatePickerMode,
+      errorFormatText: errorFormatText,
+      errorInvalidText: errorInvalidText,
+      fieldHintText: fieldHintText,
+      fieldLabelText: fieldLabelText,
+    ).whenComplete(() {
+      _removeDialogVisible(widget: dialog);
+    });
   }
 
   /// Register callbacks
@@ -187,12 +360,35 @@ mixin DialogController {
               double elevation,
               ShapeBorder shape,
               Clip clipBehavior})
-          showBottomSheet}) {
+          showBottomSheet,
+      Future<DateTime> Function({
+        @required DateTime initialDate,
+        @required DateTime firstDate,
+        @required DateTime lastDate,
+        DateTime currentDate,
+        DatePickerEntryMode initialEntryMode,
+        SelectableDayPredicate selectableDayPredicate,
+        String helpText,
+        String cancelText,
+        String confirmText,
+        Locale locale,
+        bool useRootNavigator,
+        RouteSettings routeSettings,
+        TextDirection textDirection,
+        TransitionBuilder builder,
+        DatePickerMode initialDatePickerMode,
+        String errorFormatText,
+        String errorInvalidText,
+        String fieldHintText,
+        String fieldLabelText,
+      })
+          showDatePicker}) {
     _showDialog = showDialog;
     _showDialog = showDialog;
     _showSnackBar = showSnackBar;
     _showModalBottomSheet = showModalBottomSheet;
     _showBottomSheet = showBottomSheet;
+    _showDatePicker = showDatePicker;
   }
 
   /// Pop the top-most dialog off the OneContext.dialog.

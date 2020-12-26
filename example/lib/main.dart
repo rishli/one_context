@@ -300,7 +300,6 @@ class _MyHomePageState extends State<MyHomePage>
                   showTipsOnScreen('OneContext().showDialog<String>()');
 
                   var result = await OneContext().showDialog<String>(
-                      // Don't need context to show alertDialog
                       builder: (context) => AlertDialog(
                             title: new Text("The Title"),
                             content: new Text("The Body"),
@@ -316,6 +315,22 @@ class _MyHomePageState extends State<MyHomePage>
                             ],
                           ));
                   print(result);
+                },
+              ),
+              RaisedButton(
+                child: Text('Show DatePicker'),
+                onPressed: () async {
+                  showTipsOnScreen('OneContext().showDatePicker()');
+                  DateTime selectedDate = DateTime.now();
+                  OneContext()
+                      .showDatePicker(
+                          initialDate: selectedDate,
+                          firstDate: DateTime(2015, 8),
+                          lastDate: DateTime(2101))
+                      .then((picked) => {
+                            if (picked != null && picked != selectedDate)
+                              print(picked)
+                          });
                 },
               ),
               RaisedButton(

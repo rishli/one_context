@@ -80,12 +80,33 @@ class OneContext with NavigatorController, OverlayController, DialogController {
             ShapeBorder shape,
             Clip clipBehavior})
         showBottomSheet,
-  }) {
+    Future<DateTime> Function({
+    @required DateTime initialDate,
+    @required DateTime firstDate,
+    @required DateTime lastDate,
+    DateTime currentDate,
+    DatePickerEntryMode initialEntryMode,
+    SelectableDayPredicate selectableDayPredicate,
+    String helpText,
+    String cancelText,
+    String confirmText,
+    Locale locale,
+    bool useRootNavigator,
+    RouteSettings routeSettings,
+    TextDirection textDirection,
+    TransitionBuilder builder,
+    DatePickerMode initialDatePickerMode,
+    String errorFormatText,
+    String errorInvalidText,
+    String fieldHintText,
+    String fieldLabelText,
+  }) showDatePicker }) {
     registerCallback(
         showDialog: showDialog,
         showSnackBar: showSnackBar,
         showModalBottomSheet: showModalBottomSheet,
-        showBottomSheet: showBottomSheet);
+        showBottomSheet: showBottomSheet,
+        showDatePicker: showDatePicker);
   }
 
   /// Use [OneContext().builder] in MaterialApp builder,
