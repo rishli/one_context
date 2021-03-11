@@ -18,6 +18,7 @@ class OneContext with NavigatorController, OverlayController, DialogController {
   }
 
   static bool get hasContext => _context != null;
+
   set context(BuildContext newContext) => _context = newContext;
 
   /// If you need reactive changes, do not use OneContext().mediaQuery
@@ -31,6 +32,7 @@ class OneContext with NavigatorController, OverlayController, DialogController {
   /// If you need reactive changes, do not use OneContext().textTheme
   /// Use `Theme.of(context).textTheme` instead.
   TextTheme get textTheme => theme.textTheme;
+
   FocusScopeNode get focusScope => FocusScope.of(context);
 
   /// Locale
@@ -38,7 +40,9 @@ class OneContext with NavigatorController, OverlayController, DialogController {
 
   // ThemeMode and ThemeData
   ThemeMode get themeMode => oneTheme.themeMode;
+
   ThemeData get themeData => oneTheme.themeData;
+
   ThemeData get darkThemeData => oneTheme.darkThemeData;
 
   // Notifiers
@@ -51,62 +55,56 @@ class OneContext with NavigatorController, OverlayController, DialogController {
   }
 
   static OneContext instance = OneContext._private();
+
   factory OneContext() => instance;
 
   /// Register all necessary callbacks from main widget, automatically
-  void registerDialogCallback({
-    Future<T> Function<T>(
-            {bool barrierDismissible,
-            Widget Function(BuildContext) builder,
-            bool useRootNavigator})
-        showDialog,
-    Future<T> Function<T>(
-            {Widget Function(BuildContext) builder,
-            Color backgroundColor,
-            double elevation,
-            ShapeBorder shape,
-            Clip clipBehavior,
-            bool isScrollControlled,
-            bool useRootNavigator,
-            bool isDismissible})
-        showModalBottomSheet,
-    ScaffoldFeatureController<SnackBar, SnackBarClosedReason> Function(
-            SnackBar Function(BuildContext) builder)
-        showSnackBar,
-    PersistentBottomSheetController<T> Function<T>(
-            {Widget Function(BuildContext) builder,
-            Color backgroundColor,
-            double elevation,
-            ShapeBorder shape,
-            Clip clipBehavior})
-        showBottomSheet,
-    Future<DateTime> Function({
-    @required DateTime initialDate,
-    @required DateTime firstDate,
-    @required DateTime lastDate,
-    DateTime currentDate,
-    DatePickerEntryMode initialEntryMode,
-    SelectableDayPredicate selectableDayPredicate,
-    String helpText,
-    String cancelText,
-    String confirmText,
-    Locale locale,
-    bool useRootNavigator,
-    RouteSettings routeSettings,
-    TextDirection textDirection,
-    TransitionBuilder builder,
-    DatePickerMode initialDatePickerMode,
-    String errorFormatText,
-    String errorInvalidText,
-    String fieldHintText,
-    String fieldLabelText,
-  }) showDatePicker }) {
+  void registerDialogCallback(
+      {Future<T> Function<T>({
+        bool barrierDismissible,
+        Widget Function(BuildContext) builder,
+        bool useRootNavigator,
+        Color barrierColor,
+      })
+          showDialog,
+      Future<T> Function<T>(
+              {Widget Function(BuildContext) builder,
+              Color backgroundColor,
+              double elevation,
+              ShapeBorder shape,
+              Clip clipBehavior,
+              bool isScrollControlled,
+              bool useRootNavigator,
+              bool isDismissible})
+          showModalBottomSheet,
+      ScaffoldFeatureController<SnackBar, SnackBarClosedReason> Function(SnackBar Function(BuildContext) builder) showSnackBar,
+      PersistentBottomSheetController<T> Function<T>(
+              {Widget Function(BuildContext) builder, Color backgroundColor, double elevation, ShapeBorder shape, Clip clipBehavior})
+          showBottomSheet,
+      Future<DateTime> Function({
+        @required DateTime initialDate,
+        @required DateTime firstDate,
+        @required DateTime lastDate,
+        DateTime currentDate,
+        DatePickerEntryMode initialEntryMode,
+        SelectableDayPredicate selectableDayPredicate,
+        String helpText,
+        String cancelText,
+        String confirmText,
+        Locale locale,
+        bool useRootNavigator,
+        RouteSettings routeSettings,
+        TextDirection textDirection,
+        TransitionBuilder builder,
+        DatePickerMode initialDatePickerMode,
+        String errorFormatText,
+        String errorInvalidText,
+        String fieldHintText,
+        String fieldLabelText,
+      })
+          showDatePicker}) {
     registerCallback(
-        showDialog: showDialog,
-        showSnackBar: showSnackBar,
-        showModalBottomSheet: showModalBottomSheet,
-        showBottomSheet: showBottomSheet,
-        showDatePicker: showDatePicker);
+        showDialog: showDialog, showSnackBar: showSnackBar, showModalBottomSheet: showModalBottomSheet, showBottomSheet: showBottomSheet, showDatePicker: showDatePicker);
   }
 
   /// Use [OneContext().builder] in MaterialApp builder,
@@ -145,13 +143,7 @@ class ParentContextWidget extends StatelessWidget {
   final Widget child;
 
   const ParentContextWidget(
-      {Key key,
-      this.child,
-      this.mediaQueryData,
-      this.initialRoute,
-      this.onGenerateRoute,
-      this.onUnknownRoute,
-      this.observers = const <NavigatorObserver>[]})
+      {Key key, this.child, this.mediaQueryData, this.initialRoute, this.onGenerateRoute, this.onUnknownRoute, this.observers = const <NavigatorObserver>[]})
       : super(key: key);
 
   @override

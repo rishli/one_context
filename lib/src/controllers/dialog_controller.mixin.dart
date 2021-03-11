@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 
 typedef Widget DialogBuilder(BuildContext context);
 mixin DialogController {
-
   /// Return dialog utility class `DialogController`
   DialogController get dialog => this;
 
@@ -13,6 +12,7 @@ mixin DialogController {
   BuildContext get context => OneContext().context;
 
   List<OneBasicWidget> _dialogs = [];
+
   List<OneBasicWidget> get dialogList => _dialogs;
 
   /// Check if it has dialog visible
@@ -29,10 +29,13 @@ mixin DialogController {
       _dialogs.removeLast();
   }
 
-  Future<T> Function<T>(
-      {bool barrierDismissible,
-      Widget Function(BuildContext) builder,
-      bool useRootNavigator}) _showDialog;
+  Future<T> Function<T>({
+    bool barrierDismissible,
+    Widget Function(BuildContext) builder,
+    bool useRootNavigator,
+    Color barrierColor,
+  }) _showDialog;
+
   Future<T> Function<T>(
       {Widget Function(BuildContext) builder,
       Color backgroundColor,
@@ -42,14 +45,19 @@ mixin DialogController {
       bool isScrollControlled,
       bool useRootNavigator,
       bool isDismissible}) _showModalBottomSheet;
+
   ScaffoldFeatureController<SnackBar, SnackBarClosedReason> Function(
-      SnackBar Function(BuildContext) builder) _showSnackBar;
-  PersistentBottomSheetController<T> Function<T>(
-      {Widget Function(BuildContext) builder,
-      Color backgroundColor,
-      double elevation,
-      ShapeBorder shape,
-      Clip clipBehavior}) _showBottomSheet;
+    SnackBar Function(BuildContext) builder,
+  ) _showSnackBar;
+
+  PersistentBottomSheetController<T> Function<T>({
+    Widget Function(BuildContext) builder,
+    Color backgroundColor,
+    double elevation,
+    ShapeBorder shape,
+    Clip clipBehavior,
+  }) _showBottomSheet;
+
   Future<DateTime> Function({
     @required DateTime initialDate,
     @required DateTime firstDate,
@@ -77,22 +85,26 @@ mixin DialogController {
   /// barrier behavior (dialog is dismissible with a tap on the barrier).
   Future<T> showDialog<T>(
       {@required Widget Function(BuildContext) builder,
-      bool barrierDismissible = true,
+      Color barrierColor = Colors.transparent,
+      bool barrierDismissible = false,
       bool useRootNavigator = true,
-      bool isBackButtonDismissible}) async {
+      bool isBackButtonDismissible,
+      Function() onClickBackButtonDismissCallback}) async {
     assert(builder != null);
     if (!(await _contextLoaded())) return null;
-    if (isBackButtonDismissible == null)
-      isBackButtonDismissible = barrierDismissible;
+    if (isBackButtonDismissible == null) isBackButtonDismissible = barrierDismissible;
     Widget dialog = OneBasicWidget(
-        child: builder(context),
-        type: OneBasicWidgetTypes.dialog,
-        isBackButtonDismissible: isBackButtonDismissible);
+      child: builder(context),
+      type: OneBasicWidgetTypes.dialog,
+      isBackButtonDismissible: isBackButtonDismissible,
+      onClickBackButtonDismissCallback: onClickBackButtonDismissCallback,
+    );
     _addDialogVisible(dialog);
     return _showDialog<T>(
       builder: (_) => dialog,
       barrierDismissible: barrierDismissible,
       useRootNavigator: useRootNavigator,
+      barrierColor: barrierColor,
     ).whenComplete(() {
       _removeDialogVisible(widget: dialog);
     });
@@ -102,8 +114,7 @@ mixin DialogController {
   /// Dismiss a [SnackBar] at the bottom of the scaffold.
   /// Use `hideCurrentSnackBar` instead.
   @deprecated
-  void dismissSnackBar(
-      {SnackBarClosedReason reason = SnackBarClosedReason.hide}) async {
+  void dismissSnackBar({SnackBarClosedReason reason = SnackBarClosedReason.hide}) async {
     if (!(await _contextLoaded())) return;
     Scaffold.of(context).hideCurrentSnackBar(reason: reason);
   }
@@ -111,8 +122,7 @@ mixin DialogController {
   /// Removes the current [SnackBar] by running its normal exit animation.
   ///
   /// The closed completer is called after the animation is complete.
-  void hideCurrentSnackBar(
-      {SnackBarClosedReason reason = SnackBarClosedReason.hide}) async {
+  void hideCurrentSnackBar({SnackBarClosedReason reason = SnackBarClosedReason.hide}) async {
     if (!(await _contextLoaded())) return;
     Scaffold.of(context).hideCurrentSnackBar(reason: reason);
   }
@@ -121,24 +131,18 @@ mixin DialogController {
   ///
   /// The removed snack bar does not run its normal exit animation. If there are
   /// any queued snack bars, they begin their entrance animation immediately.
-  void removeCurrentSnackBar(
-      {SnackBarClosedReason reason = SnackBarClosedReason.hide}) async {
+  void removeCurrentSnackBar({SnackBarClosedReason reason = SnackBarClosedReason.hide}) async {
     if (!(await _contextLoaded())) return;
     Scaffold.of(context).removeCurrentSnackBar(reason: reason);
   }
 
   /// Shows a [SnackBar] at the bottom of the scaffold.
-  Future<ScaffoldFeatureController<SnackBar, SnackBarClosedReason>>
-      showSnackBar(
-          {@required SnackBar Function(BuildContext) builder,
-          bool isBackButtonDismissible = true}) async {
+  Future<ScaffoldFeatureController<SnackBar, SnackBarClosedReason>> showSnackBar(
+      {@required SnackBar Function(BuildContext) builder, bool isBackButtonDismissible = true}) async {
     assert(builder != null);
     if (!(await _contextLoaded())) return null;
     Widget snackbar = builder(context);
-    Widget dialog = OneBasicWidget(
-        child: snackbar,
-        type: OneBasicWidgetTypes.snackbar,
-        isBackButtonDismissible: isBackButtonDismissible);
+    Widget dialog = OneBasicWidget(child: snackbar, type: OneBasicWidgetTypes.snackbar, isBackButtonDismissible: isBackButtonDismissible);
     _addDialogVisible(dialog);
     return _showSnackBar((_) => snackbar)
       ..closed.whenComplete(() {
@@ -162,12 +166,8 @@ mixin DialogController {
       bool isBackButtonDismissible}) async {
     assert(builder != null);
     if (!(await _contextLoaded())) return null;
-    if (isBackButtonDismissible == null)
-      isBackButtonDismissible = isDismissible;
-    Widget dialog = OneBasicWidget(
-        child: builder(context),
-        type: OneBasicWidgetTypes.modalBottomSheet,
-        isBackButtonDismissible: isBackButtonDismissible);
+    if (isBackButtonDismissible == null) isBackButtonDismissible = isDismissible;
+    Widget dialog = OneBasicWidget(child: builder(context), type: OneBasicWidgetTypes.modalBottomSheet, isBackButtonDismissible: isBackButtonDismissible);
     _addDialogVisible(dialog);
     return _showModalBottomSheet<T>(
             builder: (_) => dialog,
@@ -197,17 +197,9 @@ mixin DialogController {
       bool isBackButtonDismissible = true}) async {
     assert(builder != null);
     if (!(await _contextLoaded())) return null;
-    Widget dialog = OneBasicWidget(
-        child: builder(context),
-        type: OneBasicWidgetTypes.bottomSheet,
-        isBackButtonDismissible: isBackButtonDismissible);
+    Widget dialog = OneBasicWidget(child: builder(context), type: OneBasicWidgetTypes.bottomSheet, isBackButtonDismissible: isBackButtonDismissible);
     _addDialogVisible(dialog);
-    return _showBottomSheet<T>(
-        builder: builder,
-        backgroundColor: backgroundColor,
-        elevation: elevation,
-        shape: shape,
-        clipBehavior: clipBehavior)
+    return _showBottomSheet<T>(builder: builder, backgroundColor: backgroundColor, elevation: elevation, shape: shape, clipBehavior: clipBehavior)
       ..closed.whenComplete(() {
         _removeDialogVisible(widget: dialog);
       });
@@ -304,10 +296,7 @@ mixin DialogController {
     String fieldLabelText,
   }) async {
     if (!(await _contextLoaded())) return null;
-    OneBasicWidget dialog = OneBasicWidget(
-        child: SizedBox.shrink(),
-        type: OneBasicWidgetTypes.datePicker,
-        isBackButtonDismissible: isBackButtonDismissible);
+    OneBasicWidget dialog = OneBasicWidget(child: SizedBox.shrink(), type: OneBasicWidgetTypes.datePicker, isBackButtonDismissible: isBackButtonDismissible);
     _addDialogVisible(dialog);
     return _showDatePicker(
       initialDate: initialDate,
@@ -336,10 +325,12 @@ mixin DialogController {
 
   /// Register callbacks
   void registerCallback(
-      {Future<T> Function<T>(
-              {bool barrierDismissible,
-              Widget Function(BuildContext) builder,
-              bool useRootNavigator})
+      {Future<T> Function<T>({
+        bool barrierDismissible,
+        Widget Function(BuildContext) builder,
+        bool useRootNavigator,
+        Color barrierColor,
+      })
           showDialog,
       Future<T> Function<T>(
               {Widget Function(BuildContext) builder,
@@ -351,15 +342,9 @@ mixin DialogController {
               bool useRootNavigator,
               bool isDismissible})
           showModalBottomSheet,
-      ScaffoldFeatureController<SnackBar, SnackBarClosedReason> Function(
-              SnackBar Function(BuildContext) builder)
-          showSnackBar,
+      ScaffoldFeatureController<SnackBar, SnackBarClosedReason> Function(SnackBar Function(BuildContext) builder) showSnackBar,
       PersistentBottomSheetController<T> Function<T>(
-              {Widget Function(BuildContext) builder,
-              Color backgroundColor,
-              double elevation,
-              ShapeBorder shape,
-              Clip clipBehavior})
+              {Widget Function(BuildContext) builder, Color backgroundColor, double elevation, ShapeBorder shape, Clip clipBehavior})
           showBottomSheet,
       Future<DateTime> Function({
         @required DateTime initialDate,
@@ -383,7 +368,6 @@ mixin DialogController {
         String fieldLabelText,
       })
           showDatePicker}) {
-    _showDialog = showDialog;
     _showDialog = showDialog;
     _showSnackBar = showSnackBar;
     _showModalBottomSheet = showModalBottomSheet;
