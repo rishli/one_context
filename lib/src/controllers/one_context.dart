@@ -8,46 +8,46 @@ import 'package:flutter/material.dart';
 import 'package:one_context/src/controllers/one_theme_controller.dart';
 
 class OneContext with NavigatorController, OverlayController, DialogController {
-  static BuildContext _context;
+  static BuildContext? _context;
 
   /// The almost top root context of the app,
   /// use it carefully or don't use it directly!
-  BuildContext get context {
+  BuildContext? get context {
     assert(_context != null, NO_CONTEXT_ERROR);
     return _context;
   }
 
   static bool get hasContext => _context != null;
 
-  set context(BuildContext newContext) => _context = newContext;
+  set context(BuildContext? newContext) => _context = newContext;
 
   /// If you need reactive changes, do not use OneContext().mediaQuery
   /// Use `MediaQuery.of(context)` instead.
-  MediaQueryData get mediaQuery => MediaQuery.of(context);
+  MediaQueryData get mediaQuery => MediaQuery.of(context!);
 
   /// If you need reactive changes, do not use OneContext().theme
   /// Use `Theme.of(context)` instead.
-  ThemeData get theme => Theme.of(context);
+  ThemeData get theme => Theme.of(context!);
 
   /// If you need reactive changes, do not use OneContext().textTheme
   /// Use `Theme.of(context).textTheme` instead.
   TextTheme get textTheme => theme.textTheme;
 
-  FocusScopeNode get focusScope => FocusScope.of(context);
+  FocusScopeNode get focusScope => FocusScope.of(context!);
 
   /// Locale
-  Locale get locale => Localizations.localeOf(context);
+  Locale get locale => Localizations.localeOf(context!);
 
   // ThemeMode and ThemeData
   ThemeMode get themeMode => oneTheme.themeMode;
 
-  ThemeData get themeData => oneTheme.themeData;
+  ThemeData? get themeData => oneTheme.themeData;
 
-  ThemeData get darkThemeData => oneTheme.darkThemeData;
+  ThemeData? get darkThemeData => oneTheme.darkThemeData;
 
   // Notifiers
-  OneNotificationController oneNotifier;
-  OneThemeController oneTheme;
+  late OneNotificationController oneNotifier;
+  late OneThemeController oneTheme;
 
   OneContext._private() {
     oneNotifier = OneNotificationController();
@@ -59,52 +59,44 @@ class OneContext with NavigatorController, OverlayController, DialogController {
   factory OneContext() => instance;
 
   /// Register all necessary callbacks from main widget, automatically
-  void registerDialogCallback(
-      {Future<T> Function<T>({
-        bool barrierDismissible,
-        Widget Function(BuildContext) builder,
-        bool useRootNavigator,
-        Color barrierColor,
-      })
-          showDialog,
-      Future<T> Function<T>(
-              {Widget Function(BuildContext) builder,
-              Color backgroundColor,
-              double elevation,
-              ShapeBorder shape,
-              Clip clipBehavior,
-              bool isScrollControlled,
-              bool useRootNavigator,
-              bool isDismissible})
-          showModalBottomSheet,
-      ScaffoldFeatureController<SnackBar, SnackBarClosedReason> Function(SnackBar Function(BuildContext) builder) showSnackBar,
-      PersistentBottomSheetController<T> Function<T>(
-              {Widget Function(BuildContext) builder, Color backgroundColor, double elevation, ShapeBorder shape, Clip clipBehavior})
-          showBottomSheet,
-      Future<DateTime> Function({
-        @required DateTime initialDate,
-        @required DateTime firstDate,
-        @required DateTime lastDate,
-        DateTime currentDate,
-        DatePickerEntryMode initialEntryMode,
-        SelectableDayPredicate selectableDayPredicate,
-        String helpText,
-        String cancelText,
-        String confirmText,
-        Locale locale,
-        bool useRootNavigator,
-        RouteSettings routeSettings,
-        TextDirection textDirection,
-        TransitionBuilder builder,
-        DatePickerMode initialDatePickerMode,
-        String errorFormatText,
-        String errorInvalidText,
-        String fieldHintText,
-        String fieldLabelText,
-      })
-          showDatePicker}) {
+  void registerDialogCallback({
+    Future<T?> Function<T>({
+      bool? barrierDismissible,
+      required Widget Function(BuildContext) builder,
+      bool useRootNavigator,
+      Color barrierColor,
+    })?
+        showDialog,
+    Future<T?> Function<T>({
+      required Widget Function(BuildContext) builder,
+      Color? backgroundColor,
+      double? elevation,
+      ShapeBorder? shape,
+      Clip? clipBehavior,
+      bool? isScrollControlled,
+      bool? useRootNavigator,
+      bool? isDismissible,
+    })?
+        showModalBottomSheet,
+    ScaffoldFeatureController<SnackBar, SnackBarClosedReason> Function(
+      SnackBar Function(BuildContext?) builder,
+    )?
+        showSnackBar,
+    PersistentBottomSheetController<T> Function<T>({
+      Widget Function(BuildContext)? builder,
+      Color? backgroundColor,
+      double? elevation,
+      ShapeBorder? shape,
+      Clip? clipBehavior,
+    })?
+        showBottomSheet,
+  }) {
     registerCallback(
-        showDialog: showDialog, showSnackBar: showSnackBar, showModalBottomSheet: showModalBottomSheet, showBottomSheet: showBottomSheet, showDatePicker: showDatePicker);
+      showDialog: showDialog,
+      showSnackBar: showSnackBar,
+      showModalBottomSheet: showModalBottomSheet,
+      showBottomSheet: showBottomSheet,
+    );
   }
 
   /// Use [OneContext().builder] in MaterialApp builder,
@@ -117,12 +109,12 @@ class OneContext with NavigatorController, OverlayController, DialogController {
   ///       builder: OneContext().builder,
   ///      ...
   /// ```
-  Widget builder(BuildContext context, Widget widget,
-          {Key key,
-          MediaQueryData mediaQueryData,
-          String initialRoute,
-          Route<dynamic> Function(RouteSettings) onGenerateRoute,
-          Route<dynamic> Function(RouteSettings) onUnknownRoute,
+  Widget builder(BuildContext context, Widget? widget,
+          {Key? key,
+          MediaQueryData? mediaQueryData,
+          String? initialRoute,
+          Route<dynamic> Function(RouteSettings)? onGenerateRoute,
+          Route<dynamic> Function(RouteSettings)? onUnknownRoute,
           List<NavigatorObserver> observers = const <NavigatorObserver>[]}) =>
       ParentContextWidget(
         child: widget,
@@ -135,15 +127,15 @@ class OneContext with NavigatorController, OverlayController, DialogController {
 }
 
 class ParentContextWidget extends StatelessWidget {
-  final MediaQueryData mediaQueryData;
-  final String initialRoute;
-  final Route<dynamic> Function(RouteSettings) onGenerateRoute;
-  final Route<dynamic> Function(RouteSettings) onUnknownRoute;
+  final MediaQueryData? mediaQueryData;
+  final String? initialRoute;
+  final Route<dynamic> Function(RouteSettings)? onGenerateRoute;
+  final Route<dynamic> Function(RouteSettings)? onUnknownRoute;
   final List<NavigatorObserver> observers;
-  final Widget child;
+  final Widget? child;
 
   const ParentContextWidget(
-      {Key key, this.child, this.mediaQueryData, this.initialRoute, this.onGenerateRoute, this.onUnknownRoute, this.observers = const <NavigatorObserver>[]})
+      {Key? key, this.child, this.mediaQueryData, this.initialRoute, this.onGenerateRoute, this.onUnknownRoute, this.observers = const <NavigatorObserver>[]})
       : super(key: key);
 
   @override

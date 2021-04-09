@@ -9,7 +9,7 @@ mixin DialogController {
   DialogController get dialog => this;
 
   /// The current context
-  BuildContext get context => OneContext().context;
+  BuildContext? get context => OneContext().context;
 
   List<OneBasicWidget> _dialogs = [];
 
@@ -22,85 +22,63 @@ mixin DialogController {
     _dialogs.add(widget);
   }
 
-  void _removeDialogVisible({OneBasicWidget widget}) {
+  void _removeDialogVisible({OneBasicWidget? widget}) {
     if (widget != null) {
       _dialogs.remove(widget);
     } else
       _dialogs.removeLast();
   }
 
-  Future<T> Function<T>({
-    bool barrierDismissible,
-    Widget Function(BuildContext) builder,
+  Future<T?> Function<T>({
+    bool? barrierDismissible,
+    required Widget Function(BuildContext) builder,
     bool useRootNavigator,
     Color barrierColor,
-  }) _showDialog;
+  })? _showDialog;
 
-  Future<T> Function<T>(
-      {Widget Function(BuildContext) builder,
-      Color backgroundColor,
-      double elevation,
-      ShapeBorder shape,
-      Clip clipBehavior,
+  Future<T?> Function<T>(
+      {required Widget Function(BuildContext) builder,
+      Color? backgroundColor,
+      double? elevation,
+      ShapeBorder? shape,
+      Clip? clipBehavior,
       bool isScrollControlled,
       bool useRootNavigator,
-      bool isDismissible}) _showModalBottomSheet;
+      bool isDismissible})? _showModalBottomSheet;
 
   ScaffoldFeatureController<SnackBar, SnackBarClosedReason> Function(
-    SnackBar Function(BuildContext) builder,
-  ) _showSnackBar;
+    SnackBar Function(BuildContext?) builder,
+  )? _showSnackBar;
 
   PersistentBottomSheetController<T> Function<T>({
     Widget Function(BuildContext) builder,
-    Color backgroundColor,
-    double elevation,
-    ShapeBorder shape,
-    Clip clipBehavior,
-  }) _showBottomSheet;
-
-  Future<DateTime> Function({
-    @required DateTime initialDate,
-    @required DateTime firstDate,
-    @required DateTime lastDate,
-    DateTime currentDate,
-    DatePickerEntryMode initialEntryMode,
-    SelectableDayPredicate selectableDayPredicate,
-    String helpText,
-    String cancelText,
-    String confirmText,
-    Locale locale,
-    bool useRootNavigator,
-    RouteSettings routeSettings,
-    TextDirection textDirection,
-    TransitionBuilder builder,
-    DatePickerMode initialDatePickerMode,
-    String errorFormatText,
-    String errorInvalidText,
-    String fieldHintText,
-    String fieldLabelText,
-  }) _showDatePicker;
+    Color? backgroundColor,
+    double? elevation,
+    ShapeBorder? shape,
+    Clip? clipBehavior,
+  })? _showBottomSheet;
 
   /// Displays a Material dialog above the current contents of the app, with
   /// Material entrance and exit animations, modal barrier color, and modal
   /// barrier behavior (dialog is dismissible with a tap on the barrier).
-  Future<T> showDialog<T>(
-      {@required Widget Function(BuildContext) builder,
+  Future<T?> showDialog<T>(
+      {required Widget Function(BuildContext) builder,
       Color barrierColor = Colors.transparent,
       bool barrierDismissible = false,
       bool useRootNavigator = true,
-      bool isBackButtonDismissible,
-      Function() onClickBackButtonDismissCallback}) async {
-    assert(builder != null);
+      bool isBackButtonDismissible = true,
+      Function()? onClickBackButtonDismissCallback}) async {
     if (!(await _contextLoaded())) return null;
-    if (isBackButtonDismissible == null) isBackButtonDismissible = barrierDismissible;
-    Widget dialog = OneBasicWidget(
-      child: builder(context),
+
+    OneBasicWidget dialog = OneBasicWidget(
+      key: UniqueKey(),
+      child: builder(context!),
       type: OneBasicWidgetTypes.dialog,
       isBackButtonDismissible: isBackButtonDismissible,
       onClickBackButtonDismissCallback: onClickBackButtonDismissCallback,
     );
     _addDialogVisible(dialog);
-    return _showDialog<T>(
+    return _showDialog!<T>(
       builder: (_) => dialog,
       barrierDismissible: barrierDismissible,
       useRootNavigator: useRootNavigator,
@@ -116,7 +94,7 @@ mixin DialogController {
   @deprecated
   void dismissSnackBar({SnackBarClosedReason reason = SnackBarClosedReason.hide}) async {
     if (!(await _contextLoaded())) return;
-    Scaffold.of(context).hideCurrentSnackBar(reason: reason);
+    Scaffold.of(context!).hideCurrentSnackBar(reason: reason);
   }
 
   /// Removes the current [SnackBar] by running its normal exit animation.
@@ -124,7 +102,7 @@ mixin DialogController {
   /// The closed completer is called after the animation is complete.
   void hideCurrentSnackBar({SnackBarClosedReason reason = SnackBarClosedReason.hide}) async {
     if (!(await _contextLoaded())) return;
-    Scaffold.of(context).hideCurrentSnackBar(reason: reason);
+    Scaffold.of(context!).hideCurrentSnackBar(reason: reason);
   }
 
   /// Removes the current [SnackBar] (if any) immediately.
@@ -133,43 +111,36 @@ mixin DialogController {
   /// any queued snack bars, they begin their entrance animation immediately.
   void removeCurrentSnackBar({SnackBarClosedReason reason = SnackBarClosedReason.hide}) async {
     if (!(await _contextLoaded())) return;
-    Scaffold.of(context).removeCurrentSnackBar(reason: reason);
+    Scaffold.of(context!).removeCurrentSnackBar(reason: reason);
   }
 
   /// Shows a [SnackBar] at the bottom of the scaffold.
-  Future<ScaffoldFeatureController<SnackBar, SnackBarClosedReason>> showSnackBar(
-      {@required SnackBar Function(BuildContext) builder, bool isBackButtonDismissible = true}) async {
-    assert(builder != null);
+  Future<ScaffoldFeatureController<SnackBar, SnackBarClosedReason>?> showSnackBar(
+      {required SnackBar Function(BuildContext?) builder, bool isBackButtonDismissible = true}) async {
     if (!(await _contextLoaded())) return null;
-    Widget snackbar = builder(context);
-    Widget dialog = OneBasicWidget(child: snackbar, type: OneBasicWidgetTypes.snackbar, isBackButtonDismissible: isBackButtonDismissible);
-    _addDialogVisible(dialog);
-    return _showSnackBar((_) => snackbar)
-      ..closed.whenComplete(() {
-        _removeDialogVisible(widget: dialog);
-      });
+    return _showSnackBar!(builder);
   }
 
   /// Shows a modal material design bottom sheet.
   ///
   /// A modal bottom sheet is an alternative to a menu or a dialog and prevents
   /// the user from interacting with the rest of the app.
-  Future<T> showModalBottomSheet<T>(
-      {@required Widget Function(BuildContext) builder,
-      Color backgroundColor,
-      double elevation,
-      ShapeBorder shape,
-      Clip clipBehavior,
+  Future<T?> showModalBottomSheet<T>(
+      {required Widget Function(BuildContext) builder,
+      Color? backgroundColor,
+      double? elevation,
+      ShapeBorder? shape,
+      Clip? clipBehavior,
       bool isScrollControlled = false,
       bool useRootNavigator = false,
       bool isDismissible = true,
-      bool isBackButtonDismissible}) async {
-    assert(builder != null);
+      bool isBackButtonDismissible = true}) async {
     if (!(await _contextLoaded())) return null;
-    if (isBackButtonDismissible == null) isBackButtonDismissible = isDismissible;
-    Widget dialog = OneBasicWidget(child: builder(context), type: OneBasicWidgetTypes.modalBottomSheet, isBackButtonDismissible: isBackButtonDismissible);
+
+    OneBasicWidget dialog =
+        OneBasicWidget(key: UniqueKey(), child: builder(context!), type: OneBasicWidgetTypes.modalBottomSheet, isBackButtonDismissible: isBackButtonDismissible);
     _addDialogVisible(dialog);
-    return _showModalBottomSheet<T>(
+    return _showModalBottomSheet!<T>(
             builder: (_) => dialog,
             backgroundColor: backgroundColor,
             clipBehavior: clipBehavior,
@@ -188,18 +159,19 @@ mixin DialogController {
   ///
   /// Returns a controller that can be used to close and otherwise manipulate the
   /// bottom sheet.
-  Future<PersistentBottomSheetController<T>> showBottomSheet<T>(
-      {@required Widget Function(BuildContext) builder,
-      Color backgroundColor,
-      double elevation,
-      ShapeBorder shape,
-      Clip clipBehavior,
+  Future<PersistentBottomSheetController<T>?> showBottomSheet<T>(
+      {required Widget Function(BuildContext) builder,
+      Color? backgroundColor,
+      double? elevation,
+      ShapeBorder? shape,
+      Clip? clipBehavior,
       bool isBackButtonDismissible = true}) async {
-    assert(builder != null);
     if (!(await _contextLoaded())) return null;
-    Widget dialog = OneBasicWidget(child: builder(context), type: OneBasicWidgetTypes.bottomSheet, isBackButtonDismissible: isBackButtonDismissible);
+
+    OneBasicWidget dialog =
+        OneBasicWidget(key: UniqueKey(), child: builder(context!), type: OneBasicWidgetTypes.bottomSheet, isBackButtonDismissible: isBackButtonDismissible);
     _addDialogVisible(dialog);
-    return _showBottomSheet<T>(builder: builder, backgroundColor: backgroundColor, elevation: elevation, shape: shape, clipBehavior: clipBehavior)
+    return _showBottomSheet!<T>(builder: builder, backgroundColor: backgroundColor, elevation: elevation, shape: shape, clipBehavior: clipBehavior)
       ..closed.whenComplete(() {
         _removeDialogVisible(widget: dialog);
       });
@@ -272,113 +244,41 @@ mixin DialogController {
   ///    used to select a range of dates.
   ///  * [CalendarDatePicker], which provides the calendar grid used by the date picker dialog.
   ///  * [InputDatePickerFormField], which provides a text input field for entering dates.
-  ///
-  Future<DateTime> showDatePicker({
-    @required DateTime initialDate,
-    @required DateTime firstDate,
-    @required DateTime lastDate,
-    bool isBackButtonDismissible = true,
-    DateTime currentDate,
-    DatePickerEntryMode initialEntryMode = DatePickerEntryMode.calendar,
-    SelectableDayPredicate selectableDayPredicate,
-    String helpText,
-    String cancelText,
-    String confirmText,
-    Locale locale,
-    bool useRootNavigator = true,
-    RouteSettings routeSettings,
-    TextDirection textDirection,
-    TransitionBuilder builder,
-    DatePickerMode initialDatePickerMode = DatePickerMode.day,
-    String errorFormatText,
-    String errorInvalidText,
-    String fieldHintText,
-    String fieldLabelText,
-  }) async {
-    if (!(await _contextLoaded())) return null;
-    OneBasicWidget dialog = OneBasicWidget(child: SizedBox.shrink(), type: OneBasicWidgetTypes.datePicker, isBackButtonDismissible: isBackButtonDismissible);
-    _addDialogVisible(dialog);
-    return _showDatePicker(
-      initialDate: initialDate,
-      firstDate: firstDate,
-      lastDate: lastDate,
-      currentDate: currentDate,
-      initialEntryMode: initialEntryMode,
-      selectableDayPredicate: selectableDayPredicate,
-      helpText: helpText,
-      cancelText: cancelText,
-      confirmText: confirmText,
-      locale: locale,
-      useRootNavigator: useRootNavigator,
-      routeSettings: routeSettings,
-      textDirection: textDirection,
-      builder: builder,
-      initialDatePickerMode: initialDatePickerMode,
-      errorFormatText: errorFormatText,
-      errorInvalidText: errorInvalidText,
-      fieldHintText: fieldHintText,
-      fieldLabelText: fieldLabelText,
-    ).whenComplete(() {
-      _removeDialogVisible(widget: dialog);
-    });
-  }
 
   /// Register callbacks
-  void registerCallback(
-      {Future<T> Function<T>({
-        bool barrierDismissible,
-        Widget Function(BuildContext) builder,
-        bool useRootNavigator,
-        Color barrierColor,
-      })
-          showDialog,
-      Future<T> Function<T>(
-              {Widget Function(BuildContext) builder,
-              Color backgroundColor,
-              double elevation,
-              ShapeBorder shape,
-              Clip clipBehavior,
-              bool isScrollControlled,
-              bool useRootNavigator,
-              bool isDismissible})
-          showModalBottomSheet,
-      ScaffoldFeatureController<SnackBar, SnackBarClosedReason> Function(SnackBar Function(BuildContext) builder) showSnackBar,
-      PersistentBottomSheetController<T> Function<T>(
-              {Widget Function(BuildContext) builder, Color backgroundColor, double elevation, ShapeBorder shape, Clip clipBehavior})
-          showBottomSheet,
-      Future<DateTime> Function({
-        @required DateTime initialDate,
-        @required DateTime firstDate,
-        @required DateTime lastDate,
-        DateTime currentDate,
-        DatePickerEntryMode initialEntryMode,
-        SelectableDayPredicate selectableDayPredicate,
-        String helpText,
-        String cancelText,
-        String confirmText,
-        Locale locale,
-        bool useRootNavigator,
-        RouteSettings routeSettings,
-        TextDirection textDirection,
-        TransitionBuilder builder,
-        DatePickerMode initialDatePickerMode,
-        String errorFormatText,
-        String errorInvalidText,
-        String fieldHintText,
-        String fieldLabelText,
-      })
-          showDatePicker}) {
+  void registerCallback({
+    Future<T?> Function<T>({
+      bool? barrierDismissible,
+      required Widget Function(BuildContext) builder,
+      bool useRootNavigator,
+      Color barrierColor,
+    })?
+        showDialog,
+    Future<T?> Function<T>(
+            {required Widget Function(BuildContext) builder,
+            Color? backgroundColor,
+            double? elevation,
+            ShapeBorder? shape,
+            Clip? clipBehavior,
+            bool? isScrollControlled,
+            bool? useRootNavigator,
+            bool? isDismissible})?
+        showModalBottomSheet,
+    ScaffoldFeatureController<SnackBar, SnackBarClosedReason> Function(SnackBar Function(BuildContext?) builder)? showSnackBar,
+    PersistentBottomSheetController<T> Function<T>(
+            {Widget Function(BuildContext)? builder, Color? backgroundColor, double? elevation, ShapeBorder? shape, Clip? clipBehavior})?
+        showBottomSheet,
+  }) {
     _showDialog = showDialog;
     _showSnackBar = showSnackBar;
     _showModalBottomSheet = showModalBottomSheet;
     _showBottomSheet = showBottomSheet;
-    _showDatePicker = showDatePicker;
   }
 
   /// Pop the top-most dialog off the OneContext.dialog.
-  popDialog<T extends Object>([T result]) async {
+  popDialog<T extends Object>([T? result]) async {
     if (!(await _contextLoaded())) return;
-    return Navigator.of(context).pop<T>(result);
+    return Navigator.of(context!).pop<T>(result);
   }
 
   Future<bool> _contextLoaded() async {
