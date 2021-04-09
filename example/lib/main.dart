@@ -177,6 +177,33 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     ));
   }
 
+  _showDialog1() async {
+    Future.delayed(Duration(seconds: 3), () {
+      print("定时关闭弹窗");
+
+      ///TODO 调用该方法关闭弹窗时，关闭的是相同页面下，最后使用OneContext.showDialog()显示的dialog
+      ///TODO 关闭弹窗前，先检查是否有dialog显示，否则会关闭当前页面
+      ///TODO 即使先调用OneContext.showDialog()显示的dialog，再调用Flutter showDialog（）显示dialog，使用Flutter showDialog（）的dialog显示在最下面
+      OneContext().popDialog();
+    });
+
+    OneContext().showDialog<String>(
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.blue,
+        title: new Text("第一个弹窗1"),
+        content: new Text("The Body"),
+        actions: <Widget>[
+          new FlatButton(child: new Text("OK"), onPressed: () => OneContext().popDialog('ok')),
+          new FlatButton(child: new Text("CANCEL"), onPressed: () => OneContext().popDialog('cancel')),
+        ],
+      ),
+      isBackButtonDismissible: true,
+      onClickBackButtonDismissCallback: () {
+        print('rishli 关闭了弹窗111');
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -282,10 +309,16 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
                 child: Text('Show Dialog显示弹窗'),
                 onPressed: () async {
                   showTipsOnScreen('OneContext().showDialog<String>()');
+                  //TODO 测试弹窗显示
+                  print("OneContext中的context与当前page的context是否是同一个：${context == OneContext().context}");
 
-                  var result = await OneContext().showDialog<String>(
+                  await _showDialog1();
+
+                  print("第一个dialog已经显示");
+
+                  OneContext().showDialog<String>(
                     builder: (context) => AlertDialog(
-                      title: new Text("The Title"),
+                      title: new Text("The Title2"),
                       content: new Text("The Body"),
                       actions: <Widget>[
                         new FlatButton(child: new Text("OK"), onPressed: () => OneContext().popDialog('ok')),
@@ -294,10 +327,28 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
                     ),
                     isBackButtonDismissible: true,
                     onClickBackButtonDismissCallback: () {
-                      print('rishli 关闭了弹窗');
+                      print('rishli 关闭了弹窗2');
                     },
                   );
-                  print(result);
+
+                  print("第2个dialog已经显示");
+
+                  ///print("弹窗2 result：" + (result ?? "null"));
+                  ///
+                  ///TODO 使用flutter API显示dialog
+                  showDialog(
+                      context: context,
+                      builder: (_) {
+                        return AlertDialog(
+                          backgroundColor: Colors.red,
+                          title: new Text("使用flutter API显示dialog"),
+                          content: new Text("The Body2"),
+                          actions: <Widget>[
+                            new FlatButton(child: new Text("OK2"), onPressed: () => OneContext().popDialog('ok')),
+                            new FlatButton(child: new Text("CANCEL2"), onPressed: () => OneContext().popDialog('cancel')),
+                          ],
+                        );
+                      });
                 },
               ),
               RaisedButton(
@@ -449,33 +500,66 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
                 },
               ),
               RaisedButton(
-                child: Text('Add a generic overlay'),
+                child: Text('Add a generic overlay测试'),
                 onPressed: () {
-                  showTipsOnScreen('OneContext().addOverlay(builder)');
-                  String overId = UniqueKey().toString();
-                  double getY() => Random().nextInt((MediaQuery.of(context).size.height - 50).toInt()).toDouble();
-                  double getX() => Random().nextInt((MediaQuery.of(context).size.width - 50).toInt()).toDouble();
-                  randomOffset.putIfAbsent(overId, () => Offset(getX(), getY()));
-                  Widget w = RaisedButton(
-                      child: Text(
-                        'CLOSE OR DRAG',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      color: Colors.blue,
-                      onPressed: () {
-                        OneContext().removeOverlay(overId);
-                      });
+                  // showTipsOnScreen('OneContext().addOverlay(builder)测试');
+                  // String overId = UniqueKey().toString();
+                  // double getY() => Random().nextInt((MediaQuery.of(context).size.height - 50).toInt()).toDouble();
+                  // double getX() => Random().nextInt((MediaQuery.of(context).size.width - 50).toInt()).toDouble();
+                  // randomOffset.putIfAbsent(overId, () => Offset(getX(), getY()));
+                  // Widget w = RaisedButton(
+                  //     child: Text(
+                  //       'CLOSE OR DRAG',
+                  //       style: TextStyle(color: Colors.white),
+                  //     ),
+                  //     color: Colors.blue,
+                  //     onPressed: () {
+                  //       OneContext().removeOverlay(overId);
+                  //     });
+                  //
+                  // OneContext().addOverlay(
+                  //     builder: (_) => Positioned(
+                  //         top: randomOffset[overId].dy,
+                  //         left: randomOffset[overId].dx,
+                  //         child: Draggable(
+                  //           onDragEnd: (DraggableDetails detail) => randomOffset[overId] = detail.offset,
+                  //           childWhenDragging: Container(),
+                  //           child: w,
+                  //           feedback: w,
+                  //         )),
+                  //     overlayId: overId);
+
+                  ///TODO 显示overlay测试
                   OneContext().addOverlay(
-                      builder: (_) => Positioned(
-                          top: randomOffset[overId].dy,
-                          left: randomOffset[overId].dx,
-                          child: Draggable(
-                            onDragEnd: (DraggableDetails detail) => randomOffset[overId] = detail.offset,
-                            childWhenDragging: Container(),
-                            child: w,
-                            feedback: w,
-                          )),
-                      overlayId: overId);
+                      builder: (_) {
+                        return WillPopScope(
+                          child: AbsorbPointer(
+                            child: AlertDialog(
+                              backgroundColor: Colors.cyan,
+                              title: new Text("显示overlay测试"),
+                              content: new Text("The Body2"),
+                              actions: <Widget>[
+                                new FlatButton(child: new Text("OK2"), onPressed: () {}),
+                                new FlatButton(child: new Text("CANCEL2"), onPressed: () {}),
+                              ],
+                            ),
+                          ),
+                          onWillPop: () async {
+                            print("点击返回");
+                            OneContext().removeOverlay("rishli777");
+
+                            ///TODO overlay不能拦截物理返回按钮，所以不适合加载dialog使用
+                            return false;
+                          },
+                        );
+                      },
+                      overlayId: "rishli777");
+
+                  Future.delayed(Duration(seconds: 3), () {
+                    print("定时关闭Overlay");
+
+                    OneContext().removeOverlay("rishli777");
+                  });
                 },
               ),
               RaisedButton(
